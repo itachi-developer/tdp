@@ -1,0 +1,46 @@
+def get_dettagli_grafo(self):
+        """
+        Risolve il classico Punto 1.3 dell'esame.
+        Restituisce tutte le statistiche pronte per essere stampate dal Controller.
+        """
+        
+        # 0. Statistiche di base
+        n_nodi = self.grafo.number_of_nodes()
+        n_archi = self.grafo.number_of_edges()
+
+        # a) I 3 archi di peso maggiore
+        # self.grafo.edges(data=True) restituisce tuple fatte così: (nodo1, nodo2, {'weight': 5})
+        # Usiamo una lambda function per dire a Python di usare il valore di 'weight' per ordinare
+        archi_ordinati = sorted(
+            self.grafo.edges(data=True), 
+            key=lambda arco: arco[2].get('weight', 0), 
+            reverse=True # Dal più grande al più piccolo
+        )
+        # Ne prendiamo solo i primi 3 (o 5, in base a cosa chiede la traccia)
+        top_archi = archi_ordinati[:3]
+
+        # b) Numero di componenti connesse
+        # ⚠️ ATTENZIONE TRABOCCHETTO: 
+        # Se il grafo è NON orientato (nx.Graph) usa: nx.connected_components
+        # Se il grafo è ORIENTATO (nx.DiGraph - come nel Bike Store) usa: nx.weakly_connected_components
+        componenti = list(nx.connected_components(self.grafo))
+        num_componenti = len(componenti)
+
+        # c) Componente connessa maggiore ordinata per grado
+        nodi_ordinati = []
+        if componenti: # Controllo di sicurezza se il grafo non è vuoto
+            
+            # max() con key=len trova l'insieme (componente) che contiene più nodi
+            comp_maggiore = max(componenti, key=len)
+            
+            # Ora dobbiamo ordinare questi nodi.
+            # Il testo di solito chiede: "ordinati in senso decrescente secondo il GRADO dei nodi"
+            # In NetworkX, per ottenere il grado di un nodo basta fare self.grafo.degree(nodo)
+            nodi_ordinati = sorted(
+                comp_maggiore, 
+                key=lambda n: self.grafo.degree(n), 
+                reverse=True
+            )
+
+        # Restituiamo tutto al Controller in una sola volta
+        return n_nodi, n_archi, top_archi, num_componenti, nodi_ordinati
