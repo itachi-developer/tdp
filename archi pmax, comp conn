@@ -44,3 +44,22 @@ def get_dettagli_grafo(self):
 
         # Restituiamo tutto al Controller in una sola volta
         return n_nodi, n_archi, top_archi, num_componenti, nodi_ordinati
+
+
+Per stampare i top archi:
+
+n_nodi, n_archi, top_archi, num_comp, nodi_ordinati = self.model.get_dettagli_grafo()
+
+self.view.txt_result.append_text("--- ARCHI DI PESO MAGGIORE ---\n")
+for u, v, dati in top_archi:
+    # Stampa: "Nome1 -> Nome2 | Peso: X"
+    self.view.txt_result.append_text(f"{u.nome} -> {v.nome} | Peso: {dati['weight']}\n")
+
+**Per stampare la componente connessa ordinata:**
+```python
+self.view.txt_result.append_text(f"\nLa componente maggiore ha {len(nodi_ordinati)} nodi:\n")
+
+for nodo in nodi_ordinati:
+    # Per stampare anche il grado del nodo vicino al nome:
+    grado = self.model.grafo.degree(nodo)
+    self.view.txt_result.append_text(f"{nodo.nome} (Grado: {grado})\n")
