@@ -1,0 +1,36 @@
+def get_cammino_piu_lungo_iterativo(self, nodo_partenza):
+        """
+        Risolve il Punto 1.d: Visita in profondità (DFS) ITERATIVA (senza ricorsione)
+        per trovare il percorso con il maggior numero di nodi.
+        """
+        # Il cammino più lungo trovato finora (inizialmente vuoto)
+        cammino_piu_lungo = []
+        
+        # Inizializziamo lo STACK. 
+        # Ogni elemento dello stack è una tupla: (nodo_corrente, percorso_fino_a_qui)
+        stack = [(nodo_partenza, [nodo_partenza])]
+        
+        # Continuiamo a ciclare finché lo stack non è vuoto
+        while stack:
+            # Estraiamo l'ultimo elemento inserito (Logica LIFO - Last In First Out)
+            nodo_corrente, percorso_corrente = stack.pop()
+            
+            # Se il percorso che abbiamo in mano è più lungo del nostro record attuale, lo aggiorniamo
+            if len(percorso_corrente) > len(cammino_piu_lungo):
+                cammino_piu_lungo = percorso_corrente
+                
+            # Troviamo tutti i successori (i nodi raggiungibili da qui)
+            for vicino in self.grafo.successors(nodo_corrente):
+                
+                # Controllo anti-ciclo (anche se il grafo temporale non dovrebbe averne)
+                if vicino not in percorso_corrente:
+                    
+                    # Creiamo il nuovo percorso aggiungendo il vicino
+                    # Usiamo l'operatore + che crea automaticamente una NUOVA lista, 
+                    # evitandoci problemi di sovrascrittura in memoria
+                    nuovo_percorso = percorso_corrente + [vicino]
+                    
+                    # Inseriamo il vicino e il suo percorso in cima allo stack per esplorarlo al prossimo giro
+                    stack.append((vicino, nuovo_percorso))
+                    
+        return cammino_piu_lungo
