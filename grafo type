@@ -1,0 +1,43 @@
+import networkx as nx
+from database.DAO import DAO # Assicurati di importare il tuo DAO
+
+class Model:
+    def __init__(self):
+        # ATTENZIONE: Questo è un grafo DIREZIONATO (Orientato)
+        self.grafo = nx.DiGraph() 
+        self.idMap = {}
+
+    def crea_grafo(self, genere_selezionato):
+        # 1. Pulizia di rito prima di iniziare
+        self.grafo.clear()
+        self.idMap = {}
+
+        # 2. Creazione dei NODI
+        nodi = DAO.get_nodi(genere_selezionato)
+        for n in nodi:
+            self.grafo.add_node(n)
+            self.idMap[n.ArtistId] = n  # Salviamo l'oggetto nella mappa usando il suo ID come chiave
+
+        # 3. Creazione degli ARCHI
+        # Richiamiamo la query "perfetta" che abbiamo scritto prima
+        archi_grezzi = DAO.get_archi(genere_selezionato)
+
+        for arco in archi_grezzi:
+            # arco è una tupla o dizionario (dipende da come lo hai restituito dal DAO). 
+            # Ipotizziamo restituisca dizionari con chiavi: "id1", "id2", "peso"
+            id_sorgente = arco["id1"]
+            id_destinazione = arco["id2"]
+            peso_arco = arco["peso"]
+
+            # Controlliamo che entrambi i nodi esistano davvero nel nostro grafo
+            if id_sorgente in self.idMap and id_destinazione in self.idMap:
+                
+                # Estraiamo gli oggetti fisici dalla mappa
+                nodo_u = self.idMap[id_sorgente]
+                nodo_v = self.idMap[id_destinazione]
+
+                # Aggiungiamo la freccia!
+                # Visto che è un DiGraph, add_edge crea una freccia strettamente da nodo_u a nodo_v
+                self.grafo.add_edge(nodo_u, nodo_v, weight=peso_arco)
+
+        print(f"Grafo creato: {self.grafo.number_of_nodes()} nodi, {self.grafo.number_of_edges()} archi.")
