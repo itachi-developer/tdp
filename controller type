@@ -1,0 +1,80 @@
+import flet as ft
+
+class Controller:
+    def __init__(self, view, model):
+        # La view contiene i riferimenti ai bottoni e alle tendine della GUI
+        # Il model contiene il grafo e i metodi di calcolo
+        self._view = view
+        self._model = model
+
+    def handle_crea_grafo(self, e):
+        """
+        Evento associato al pulsante "Crea Grafo" (Risolve Punto 1.b e 1.c insieme)
+        """
+        # 1. ACCORTEZZA SALVAVITA: Validazione input
+        genere_scelto = self._view.dd_genere.value
+
+        if genere_scelto is None or genere_scelto == "":
+            self._view.create_alert("Per favore, seleziona un Genere Musicale dal menù!")
+            return
+
+        # 2. Pulizia dell'area messaggi (di solito un ft.ListView) prima di scrivere
+        self._view.txt_result.controls.clear()
+
+        try:
+            # 3. Costruzione fisica del grafo nel Model
+            self._model.crea_grafo(genere_scelto)
+
+            # 4. Recupero di tutte le statistiche dal nostro "Coltellino Svizzero"
+            stats = self._model.get_statistiche_master()
+            n_nodi = stats[0]
+            n_archi = stats[1]
+            top_5 = stats[2]
+            artista_influente = stats[3]
+            punteggio_influenza = stats[4]
+
+            # 5. STAMPA A VIDEO (Sintassi standard Flet)
+            self._view.txt_result.controls.append(
+                ft.Text("Grafo correttamente creato:", weight=ft.FontWeight.BOLD, color="green")
+            )
+            self._view.txt_result.controls.append(ft.Text(f"Numero di vertici: {n_nodi}"))
+            self._view.txt_result.controls.append(ft.Text(f"Numero di archi: {n_archi}"))
+
+            if artista_influente:
+                self._view.txt_result.controls.append(
+                    ft.Text(
+                        f"\nArtista più influente: {artista_influente.Name}, con influenza: {punteggio_influenza}", 
+                        weight=ft.FontWeight.BOLD
+                    )
+                )
+
+            self._view.txt_result.controls.append(ft.Text("\nTop 5 archi:"))
+            for u, v, dati in top_5:
+                peso = dati.get('weight', 0)
+                self._view.txt_result.controls.append(
+                    ft.Text(f" {u.Name} -> {v.Name}: {peso}")
+                )
+
+            # -----------------------------------------------------------------
+            # 6. IL PASSAGGIO CHE TUTTI DIMENTICANO: Preparare il Punto 2!
+            # -----------------------------------------------------------------
+            # La traccia dice: "Popolare il menu a tendina dell'artista col genere scelto"
+            self._view.dd_artista.options.clear()
+            
+            for nodo in self._model.grafo.nodes:
+                # Inseriamo come 'key' l'ID univoco e come 'text' il nome visibile
+                self._view.dd_artista.options.append(
+                    ft.dropdown.Option(key=str(nodo.ArtistId), text=nodo.Name)
+                )
+            
+            # Sblocchiamo i controlli della seconda parte che all'avvio erano disattivati
+            self._view.dd_artista.disabled = False
+            self._view.btn_trova_cammino.disabled = False
+
+        except Exception as ex:
+            self._view.txt_result.controls.append(
+                ft.Text(f"Errore critico durante la creazione del grafo: {ex}", color="red")
+            )
+
+        # 7. MAGIA FLET: Se non chiami update_page(), a schermo non compare nulla!
+        self._view.update_page()
