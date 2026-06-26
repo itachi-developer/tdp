@@ -1,0 +1,29 @@
+-- ============================================================================
+-- 2.A QUERY NODI (Clienti residenti in una certa Nazione scelta da tendina)
+-- ============================================================================
+SELECT CustomerId, FirstName, LastName, Country
+FROM customer
+WHERE Country = %s;
+
+
+-- ============================================================================
+-- 2.B QUERY ARCHI (Grafo NON Orientato | Peso = Artisti distinti in comune)
+-- ============================================================================
+WITH ArtistiAcquistati AS (
+    SELECT DISTINCT i.CustomerId, al.ArtistId
+    FROM invoice i
+    JOIN invoiceline il ON i.InvoiceId = il.InvoiceId
+    JOIN track t ON il.TrackId = t.TrackId
+    JOIN album al ON t.AlbumId = al.AlbumId
+    JOIN customer c ON i.CustomerId = c.CustomerId
+    WHERE c.Country = %s
+)
+SELECT 
+    a1.CustomerId AS id1, 
+    a2.CustomerId AS id2, 
+    COUNT(a1.ArtistId) AS peso
+FROM ArtistiAcquistati a1
+JOIN ArtistiAcquistati a2 
+    ON a1.ArtistId = a2.ArtistId 
+    AND a1.CustomerId < a2.CustomerId -- Minore stretto per grafo NON orientato
+GROUP BY a1.CustomerId, a2.CustomerId;
