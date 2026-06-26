@@ -78,3 +78,21 @@ class Controller:
 
         # 7. MAGIA FLET: Se non chiami update_page(), a schermo non compare nulla!
         self._view.update_page()
+
+
+def handle_stampa_dettagli(self, e):
+        """
+        Da usare SOLO se esiste un pulsante "Stampa Dettagli" separato
+        """
+        # Controllo anti-crash: l'utente ha premuto "Dettagli" senza prima creare il grafo?
+        if self._model.grafo.number_of_nodes() == 0:
+            self._view.create_alert("Attenzione: devi prima costruire il grafo!")
+            return
+
+        self._view.txt_result.controls.clear()
+
+        # Chiami il model e stampi esattamente come nello step 5 qui sopra
+        stats = self._model.get_statistiche_master()
+        # ... append dei ft.Text ...
+
+        self._view.update_page()
