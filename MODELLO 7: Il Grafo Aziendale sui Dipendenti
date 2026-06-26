@@ -1,0 +1,24 @@
+-- ============================================================================
+-- 7.A QUERY NODI (I dipendenti dell'ufficio vendite)
+-- ============================================================================
+SELECT EmployeeId, FirstName, LastName, Title FROM employee;
+
+
+-- ============================================================================
+-- 7.B QUERY ARCHI (Condivisione di mercato geografico | Non Orientato)
+-- ============================================================================
+WITH MercatiDipendente AS (
+    -- Collega il dipendente alle Nazioni dei clienti che segue
+    SELECT DISTINCT c.SupportRepId AS emp_id, c.Country
+    FROM customer c
+    WHERE c.SupportRepId IS NOT NULL
+)
+SELECT 
+    m1.emp_id AS id1, 
+    m2.emp_id AS id2, 
+    COUNT(m1.Country) AS peso -- Numero di nazioni servite da entrambi
+FROM MercatiDipendente m1
+JOIN MercatiDipendente m2 
+    ON m1.Country = m2.Country 
+    AND m1.emp_id < m2.emp_id
+GROUP BY m1.emp_id, m2.emp_id;
