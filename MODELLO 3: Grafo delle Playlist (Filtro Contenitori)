@@ -1,0 +1,35 @@
+-- ============================================================================
+-- 3.A QUERY NODI (Playlist che contengono almeno N canzoni totali)
+-- ============================================================================
+SELECT p.PlaylistId, p.Name
+FROM playlist p
+JOIN playlisttrack pt ON p.PlaylistId = pt.PlaylistId
+GROUP BY p.PlaylistId, p.Name
+HAVING COUNT(pt.TrackId) >= %s; -- Parametro intero passato da casella di testo
+
+
+-- ============================================================================
+-- 3.B QUERY ARCHI (Orientato da durata complessiva maggiore a minore)
+-- ============================================================================
+WITH DurataPlaylist AS (
+    SELECT pt.PlaylistId, SUM(t.Milliseconds) AS durata_totale
+    FROM playlisttrack pt
+    JOIN track t ON pt.TrackId = t.TrackId
+    GROUP BY pt.PlaylistId
+),
+CanzoniPlaylist AS (
+    SELECT DISTINCT PlaylistId, TrackId
+    FROM playlisttrack
+)
+SELECT 
+    cp1.PlaylistId AS id1, 
+    cp2.PlaylistId AS id2, 
+    COUNT(cp1.TrackId) AS peso -- Numero canzoni condivise
+FROM CanzoniPlaylist cp1
+JOIN CanzoniPlaylist cp2 
+    ON cp1.TrackId = cp2.TrackId 
+    AND cp1.PlaylistId != cp2.PlaylistId
+JOIN DurataPlaylist d1 ON cp1.PlaylistId = d1.PlaylistId
+JOIN DurataPlaylist d2 ON cp2.PlaylistId = d2.PlaylistId
+WHERE d1.durata_totale >= d2.durata_totale
+GROUP BY cp1.PlaylistId, cp2.PlaylistId;
