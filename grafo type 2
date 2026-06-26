@@ -1,0 +1,42 @@
+import networkx as nx
+from database.DAO import DAO
+
+class Model:
+    def __init__(self):
+        # [INTERRUTTORE 1]: Tipo di Grafo
+        self.grafo = nx.Graph()  # oppure nx.DiGraph()
+        self.idMap = {}
+
+    def crea_grafo(self, parametro_filtro):
+        self.grafo.clear()
+        self.idMap = {}
+
+        # 1. CARICAMENTO NODI
+        nodi = DAO.get_nodi(parametro_filtro)
+        for n in nodi:
+            self.grafo.add_node(n)
+            # Assumiamo che l'identificativo univoco dell'oggetto si chiami 'id'
+            self.idMap[n.id] = n 
+
+        # 2. CARICAMENTO ARCHI
+        archi = DAO.get_archi(parametro_filtro)
+
+        for a in archi:
+            # [INTERRUTTORE 2]: Lettura dati dell'arco
+            u_id, v_id, peso = a[0], a[1], a[2] 
+
+            if u_id in self.idMap and v_id in self.idMap:
+                nodo_sorgente = self.idMap[u_id]
+                nodo_destinazione = self.idMap[v_id]
+
+                self.grafo.add_edge(nodo_sorgente, nodo_destinazione, weight=peso)
+
+# Sostituisce il punto 2 dello scheletro universale SOLO per esami tipo F1:
+nodi_validi = list(self.grafo.nodes)
+
+for u in nodi_validi:
+    for v in nodi_validi:
+        if u.id < v.id: # Evita doppietti
+            peso_calcolato = self._calcola_peso_matematico(u, v)
+            if peso_calcolato > 0:
+                self.grafo.add_edge(u, v, weight=peso_calcolato)
