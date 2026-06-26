@@ -1,0 +1,21 @@
+-- ============================================================================
+-- 4.A QUERY NODI (Tutte le fatture emesse nell'anno selezionato)
+-- ============================================================================
+SELECT InvoiceId, CustomerId, InvoiceDate, Total
+FROM invoice
+WHERE STRFTIME('%Y', InvoiceDate) = %s; -- Oppure YEAR(InvoiceDate) su MySQL
+
+
+-- ============================================================================
+-- 4.B QUERY ARCHI (Orientato da data vecchia a recente | Distanza max K giorni)
+-- ============================================================================
+SELECT 
+    o1.InvoiceId AS id1, 
+    o2.InvoiceId AS id2, 
+    (o1.Total + o2.Total) / DATEDIFF(o2.InvoiceDate, o1.InvoiceDate) AS peso
+FROM invoice o1
+JOIN invoice o2 
+    ON o1.InvoiceDate < o2.InvoiceDate -- Minore stretto anti divisione per zero
+WHERE STRFTIME('%Y', o1.InvoiceDate) = %s 
+  AND STRFTIME('%Y', o2.InvoiceDate) = %s
+  AND DATEDIFF(o2.InvoiceDate, o1.InvoiceDate) <= %s; -- Parametro K dall'utente
