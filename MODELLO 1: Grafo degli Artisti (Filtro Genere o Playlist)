@@ -1,0 +1,46 @@
+-- ============================================================================
+-- 1.A QUERY NODI (Artisti che hanno inciso almeno un brano del genere scelto)
+-- ============================================================================
+SELECT DISTINCT a.ArtistId, a.Name
+FROM artist a
+JOIN album al ON a.ArtistId = al.ArtistId
+JOIN track t ON al.AlbumId = t.AlbumId
+JOIN genre g ON t.GenreId = g.GenreId
+WHERE g.Name = %s;
+
+
+-- ============================================================================
+-- 1.B QUERY ARCHI (Condividono clienti | Orientato da popolarità maggiore)
+-- ============================================================================
+WITH Popolarita AS (
+    -- Calcola il fatturato/popolarità per ogni artista nel genere scelto
+    SELECT al.ArtistId, SUM(il.Quantity) AS pop
+    FROM album al
+    JOIN track t ON al.AlbumId = t.AlbumId
+    JOIN invoiceline il ON t.TrackId = il.TrackId
+    JOIN invoice i ON il.InvoiceId = i.InvoiceId
+    JOIN genre g ON t.GenreId = g.GenreId
+    WHERE g.Name = %s
+    GROUP BY al.ArtistId
+),
+ClientiArtista AS (
+    -- Mappa univoca (Cliente <-> Artista)
+    SELECT DISTINCT i.CustomerId, al.ArtistId
+    FROM invoice i
+    JOIN invoiceline il ON i.InvoiceId = il.InvoiceId
+    JOIN track t ON il.TrackId = t.TrackId
+    JOIN album al ON t.AlbumId = al.AlbumId
+    JOIN genre g ON t.GenreId = g.GenreId
+    WHERE g.Name = %s
+)
+SELECT DISTINCT 
+    c1.ArtistId AS id1, 
+    c2.ArtistId AS id2, 
+    (p1.pop + p2.pop) AS peso
+FROM ClientiArtista c1
+JOIN ClientiArtista c2 
+    ON c1.CustomerId = c2.CustomerId 
+    AND c1.ArtistId != c2.ArtistId
+JOIN Popolarita p1 ON c1.ArtistId = p1.ArtistId
+JOIN Popolarita p2 ON c2.ArtistId = p2.ArtistId
+WHERE p1.pop >= p2.pop; -- Freccia + Gestione automatica dei pareggi
