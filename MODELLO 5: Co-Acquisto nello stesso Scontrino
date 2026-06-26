@@ -1,0 +1,29 @@
+-- ============================================================================
+-- 5.A QUERY NODI (Album che contengono canzoni del genere scelto)
+-- ============================================================================
+SELECT DISTINCT al.AlbumId, al.Title
+FROM album al
+JOIN track t ON al.AlbumId = t.AlbumId
+JOIN genre g ON t.GenreId = g.GenreId
+WHERE g.Name = %s;
+
+
+-- ============================================================================
+-- 5.B QUERY ARCHI (Co-acquisto nello stesso scontrino | Non Orientato)
+-- ============================================================================
+WITH AlbumNelloScontrino AS (
+    SELECT DISTINCT il.InvoiceId, t.AlbumId
+    FROM invoiceline il
+    JOIN track t ON il.TrackId = t.TrackId
+    JOIN genre g ON t.GenreId = g.GenreId
+    WHERE g.Name = %s
+)
+SELECT 
+    a1.AlbumId AS id1, 
+    a2.AlbumId AS id2, 
+    COUNT(a1.InvoiceId) AS peso -- Quante volte sono finiti insieme nello stesso carrello
+FROM AlbumNelloScontrino a1
+JOIN AlbumNelloScontrino a2 
+    ON a1.InvoiceId = a2.InvoiceId 
+    AND a1.AlbumId < a2.AlbumId -- Minore stretto per evitare A-B e B-A
+GROUP BY a1.AlbumId, a2.AlbumId;
