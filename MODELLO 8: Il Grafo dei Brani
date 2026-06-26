@@ -1,0 +1,28 @@
+-- ============================================================================
+-- 8.A QUERY NODI (Brani appartenenti a un certo Genere o a un certo Album)
+-- ============================================================================
+SELECT t.TrackId, t.Name, t.Milliseconds, t.UnitPrice
+FROM track t
+JOIN genre g ON t.GenreId = g.GenreId
+WHERE g.Name = %s;
+
+
+-- ============================================================================
+-- 8.B QUERY ARCHI (Brani comprati insieme nello stesso scontrino | Non Orientato)
+-- ============================================================================
+WITH BraniScontrino AS (
+    SELECT DISTINCT il.InvoiceId, il.TrackId
+    FROM invoiceline il
+    JOIN track t ON il.TrackId = t.TrackId
+    JOIN genre g ON t.GenreId = g.GenreId
+    WHERE g.Name = %s
+)
+SELECT 
+    b1.TrackId AS id1, 
+    b2.TrackId AS id2, 
+    COUNT(b1.InvoiceId) AS peso -- Quante volte le due canzoni sono finite nello stesso carrello
+FROM BraniScontrino b1
+JOIN BraniScontrino b2 
+    ON b1.InvoiceId = b2.InvoiceId 
+    AND b1.TrackId < b2.TrackId -- Minore stretto per grafo semplice non orientato
+GROUP BY b1.TrackId, b2.TrackId;
