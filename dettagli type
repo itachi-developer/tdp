@@ -1,0 +1,75 @@
+import networkx as nx
+
+class Model:
+    # ... (__init__, crea_grafo, ecc.) ...
+
+    def get_statistiche_master(self):
+        """
+        Calcola TUTTE le possibili varianti d'esame del Punto 1.c
+        """
+        # ---------------------------------------------------------
+        # VARIANTE 1: Conteggi Base (Presente nel 100% delle tracce)
+        # ---------------------------------------------------------
+        n_nodi = self.grafo.number_of_nodes()
+        n_archi = self.grafo.number_of_edges()
+
+        # ---------------------------------------------------------
+        # VARIANTE 2: Top N Archi più pesanti (Presente nel 90% delle tracce)
+        # ---------------------------------------------------------
+        # self.grafo.edges(data=True) restituisce: (nodo_u, nodo_v, {'weight': 150})
+        archi_ordinati = sorted(
+            self.grafo.edges(data=True),
+            key=lambda x: x[2].get('weight', 0),
+            reverse=True  # Ordine decrescente (dal più pesante al più leggero)
+        )
+        top_5_archi = archi_ordinati[:5]  # Cambia in [:3] se la traccia ne chiede solo 3
+
+        # ---------------------------------------------------------
+        # VARIANTE 3: Artista/Nodo con "Maggiore Influenza" (Tipico di Chinook DiGraph)
+        # ---------------------------------------------------------
+        # La simulazione Chinook dice: "influenza = peso archi uscenti - peso archi entranti"
+        nodo_influente = None
+        max_influenza = -999999999
+
+        if isinstance(self.grafo, nx.DiGraph):
+            for n in self.grafo.nodes:
+                # out_degree(weight='weight') somma automaticamente i pesi di tutti gli archi uscenti!
+                peso_uscente = self.grafo.out_degree(n, weight='weight')
+                peso_entrante = self.grafo.in_degree(n, weight='weight')
+                
+                influenza = peso_uscente - peso_entrante
+                
+                if influenza > max_influenza:
+                    max_influenza = influenza
+                    nodo_influente = n
+
+        # ---------------------------------------------------------
+        # VARIANTE 4: Componenti Connesse (Tipico dei grafi non orientati stile F1)
+        # ---------------------------------------------------------
+        num_componenti = 0
+        componente_maggiore_nodi = []
+
+        if n_nodi > 0:
+            if isinstance(self.grafo, nx.DiGraph):
+                # ⚠️ TRABOCCHETTO LETALE: Su DiGraph si usano le componenti "Debolmente Connesse"
+                componenti = list(nx.weakly_connected_components(self.grafo))
+            else:
+                # Su Graph normale
+                componenti = list(nx.connected_components(self.grafo))
+
+            num_componenti = len(componenti)
+
+            # Trova l'insieme con il maggior numero di nodi
+            comp_max_set = max(componenti, key=len)
+
+            # -----------------------------------------------------
+            # VARIANTE 5: Ordinamento della Componente Maggiore per Grado
+            # -----------------------------------------------------
+            # La traccia chiede: "Stamparne i nodi ordinati per grado decrescente"
+            componente_maggiore_nodi = sorted(
+                comp_max_set,
+                key=lambda nodo: self.grafo.degree(nodo),
+                reverse=True
+            )
+
+        return n_nodi, n_archi, top_5_archi, nodo_influente, max_influenza, num_componenti, componente_maggiore_nodi
