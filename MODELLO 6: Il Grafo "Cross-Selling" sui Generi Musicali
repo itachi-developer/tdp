@@ -1,0 +1,31 @@
+-- ============================================================================
+-- 6.A QUERY NODI (Semplicissima: tutti i generi del database)
+-- ============================================================================
+SELECT GenreId, Name FROM genre;
+
+
+-- ============================================================================
+-- 6.B QUERY ARCHI (Generi ascoltati dagli stessi clienti | Orientato)
+-- ============================================================================
+WITH FatturatoGenere AS (
+    SELECT t.GenreId, SUM(il.UnitPrice * il.Quantity) AS incasso_tot
+    FROM track t JOIN invoiceline il ON t.TrackId = il.TrackId
+    GROUP BY t.GenreId
+),
+ClientiPerGenere AS (
+    SELECT DISTINCT i.CustomerId, t.GenreId
+    FROM invoice i
+    JOIN invoiceline il ON i.InvoiceId = il.InvoiceId
+    JOIN track t ON il.TrackId = t.TrackId
+)
+SELECT DISTINCT
+    c1.GenreId AS id1, 
+    c2.GenreId AS id2, 
+    (f1.incasso_tot + f2.incasso_tot) AS peso
+FROM ClientiPerGenere c1
+JOIN ClientiPerGenere c2 
+    ON c1.CustomerId = c2.CustomerId 
+    AND c1.GenreId != c2.GenreId
+JOIN FatturatoGenere f1 ON c1.GenreId = f1.GenreId
+JOIN FatturatoGenere f2 ON c2.GenreId = f2.GenreId
+WHERE f1.incasso_tot >= f2.incasso_tot;
