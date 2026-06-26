@@ -1,0 +1,69 @@
+class Model:
+    def __init__(self):
+        self.grafo = nx.DiGraph() # o nx.Graph()
+        # Variabili globali per salvare il "record" migliore trovato durante la visita
+        self._bestPath = []
+        self._bestScore = 0
+
+    # =========================================================================
+    # METODO PUBBLICO (Chiamato dal Controller quando si preme il bottone)
+    # =========================================================================
+    def get_percorso_ottimo(self, nodo_partenza):
+        """
+        Inizializza le variabili di record e fa partire la ricorsione
+        """
+        self._bestPath = []
+        self._bestScore = 0
+
+        # Il percorso parziale inizia con il solo nodo di partenza
+        parziale = [nodo_partenza]
+
+        # Avvio ricorsione: passiamo (parziale, ultimo_peso_incontrato)
+        # Usiamo -1 come peso iniziale fittizio se cerchiamo pesi CRESCENTI
+        # Usiamo +float('inf') come peso iniziale fittizio se cerchiamo pesi DECRESCENTI
+        self._ricorsione(parziale, -1)
+
+        return self._bestPath, self._bestScore
+
+    # =========================================================================
+    # METODO PRIVATO RICORSIVO (Il vero motore del Backtracking)
+    # =========================================================================
+    def _ricorsione(self, parziale, peso_precedente):
+        
+        # ---------------------------------------------------------------------
+        # 1. VALUTAZIONE SOLUZIONE ATTUALE (Aggiornamento del Record Ottimo)
+        # ---------------------------------------------------------------------
+        # Metrica: "Cammino di lunghezza massima" -> contiamo i nodi
+        punteggio_attuale = len(parziale)
+
+        if punteggio_attuale > self._bestScore:
+            self._bestScore = punteggio_attuale
+            self._bestPath = list(parziale) # ⚠️ FONDAMENTALE: Usare list() per fare una copia fisica!
+
+        nodo_corrente = parziale[-1]
+
+        # ---------------------------------------------------------------------
+        # 2. GENERAZIONE E FILTRAGGIO DEI VICINI (Esplorazione)
+        # ---------------------------------------------------------------------
+        # Su DiGraph: self.grafo.successors(nodo_corrente)
+        # Su Graph semplice: self.grafo.neighbors(nodo_corrente)
+        vicini = self.grafo.successors(nodo_corrente) if self.grafo.is_directed() else self.grafo.neighbors(nodo_corrente)
+
+        for vicino in vicini:
+            
+            # Leggiamo il peso dell'arco che stiamo per attraversare
+            peso_arco = self.grafo[nodo_corrente][vicino]['weight']
+
+            # --- FILTRO 1: Cammino semplice (evitiamo cicli infiniti) ---
+            if vicino not in parziale:
+
+                # --- FILTRO 2: Vincolo di monotonia della traccia ---
+                # Traccia Chinook: "ogni arco successivo abbia peso strettamente crescente"
+                if peso_arco > peso_precedente:  
+                    
+                    # ---------------------------------------------------------
+                    # 3. PASSO RICORSIVO + BACKTRACKING (Fai e Disfai)
+                    # ---------------------------------------------------------
+                    parziale.append(vicino)          # FAI
+                    self._ricorsione(parziale, peso_arco) # ESPLORA IN PROFONDITÀ
+                    parziale.pop()                   # DISFAI (Torna indietro per provare altre strade)
