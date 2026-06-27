@@ -24,9 +24,9 @@ class Model:
         )
         top5 = archi_ordinati[:5]  # Cambia in [:3] se la traccia ne chiede solo 3
         ris = []
-        for u_id, v_id, peso in top5:
-            nome1 = self._idMap[u_id].name
-            nome2 = self._idMap[v_id].name
+        for u, v, peso in top5:
+            nome1 = u.name
+            nome2 = v.name
 
             ris.append((nome1, nome2, peso))
 
