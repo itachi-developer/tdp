@@ -1,0 +1,31 @@
+def popola_tendina(self):
+        """
+        Template standard per riempire un ft.Dropdown
+        """
+        # 1. Pulizia obbligatoria (evita duplicati se l'utente ricarica la pagina)
+        self._view.mia_tendina.options.clear()
+
+        try:
+            # 2. Chiamata al DAO per avere i dati
+            elementi = DAO.get_elementi_tendina()
+
+            # 3. Ciclo di creazione delle opzioni Flet
+            for el in elementi:
+                
+                # Scompatta i campi letti da SQL
+                id_elemento = str(el["colonna_id"])  # ⚠️ La 'key' in Flet deve essere SEMPRE una stringa!
+                nome_visibile = el["colonna_nome"]
+
+                # Creazione oggetto Opzione
+                opzione = ft.dropdown.Option(
+                    key = id_elemento,     # Quello che legge Python quando fai .value
+                    text = nome_visibile   # Quello che vede l'utente a schermo
+                )
+                
+                self._view.mia_tendina.options.append(opzione)
+
+        except Exception as e:
+            print(f"Errore nel caricamento della tendina: {e}")
+
+        # 4. REGOLE DI FLET: Aggiornare la pagina per mostrare i cambiamenti!
+        self._view.update_page()
