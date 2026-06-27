@@ -22,7 +22,13 @@ class Model:
             key=lambda x: x[2].get('weight', 0),
             reverse=True  # Ordine decrescente (dal più pesante al più leggero)
         )
-        top_5_archi = archi_ordinati[:5]  # Cambia in [:3] se la traccia ne chiede solo 3
+        top5 = archi_ordinati[:5]  # Cambia in [:3] se la traccia ne chiede solo 3
+        ris = []
+        for u_id, v_id, peso in top5:
+            nome1 = self._idMap[u_id].name
+            nome2 = self._idMap[v_id].name
+
+            ris.append((nome1, nome2, peso))
 
         # ---------------------------------------------------------
         # VARIANTE 3: Artista/Nodo con "Maggiore Influenza" (Tipico di Chinook DiGraph)
@@ -72,4 +78,4 @@ class Model:
                 reverse=True
             )
 
-        return n_nodi, n_archi, top_5_archi, nodo_influente, max_influenza, num_componenti, componente_maggiore_nodi
+        return n_nodi, n_archi, ris, nodo_influente, max_influenza, num_componenti, componente_maggiore_nodi
