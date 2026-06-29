@@ -1,0 +1,63 @@
+with artisti as (select a.ArtistId, a.Name, count(il.InvoiceId) as pop
+from artist a 
+join album al on a.ArtistId = al.ArtistId 
+join track t on al.AlbumId = t.AlbumId 
+join genre g on t.GenreId = g.GenreId 
+join invoiceline il on t.TrackId = il.TrackId 
+where g.Name = 'Rock'
+group by a.ArtistId, a.Name),
+clienti as (select i.CustomerId, al.ArtistId 
+from invoice i  
+join invoiceline il on i.InvoiceId = il.InvoiceId 
+join track t on il.TrackId = t.TrackId 
+join album al on t.AlbumId = al.AlbumId 
+join genre g on t.GenreId  = g.GenreId 
+where g.Name = 'Rock')
+select a1.name, a2.name, (a1.pop + a2.pop) as peso
+from clienti c1 
+join clienti c2 on c1.customerid = c2.customerid 
+join artisti a1 on c1.artistid = a1.artistid 
+join artisti a2 on c2.artistid = a2.artistid 
+where c1.artistid != c2.artistid 
+and a1.pop >= a2.pop 
+group by a1.name, a2.name
+
+
+with piloti as (select d.driverId, d.surname, rs.constructorId, r.raceId
+from drivers d 
+join results rs on d.driverId = rs.driverId 
+join races r on rs.raceId = r.raceId 
+where r.`year` between 2007 and 2008
+and rs.`position` is not null) 
+select p1.surname, p2.surname, count(*) as peso
+from piloti p1
+join piloti p2 on p1.driverid < p2.driverid 
+and p1.constructorid = p2.constructorid 
+and p1.raceid = p2.raceid 
+group by p1.surname, p2.surname 
+
+
+with ordini as (select o.order_id, sum(oi.quantity) as tot, o.order_date 
+from orders o  
+join stores s on o.store_id = s.store_id 
+join order_items oi on o.order_id = oi.order_id 
+where s.store_name = 'Rowlett Bikes'
+group by o.order_id)
+select o1.order_id, o2.order_id, (o1.tot + o2.tot)/datediff(o2.order_date, o1.order_date) as peso
+from ordini o1 
+join ordini o2 on o1.order_date < o2.order_date 
+where datediff(o2.order_date, o1.order_date) <= 5 
+group by o1.order_id, o2.order_id 
+
+
+with costruttori as (select c.constructorId, c.name, rs.driverId
+from constructors c 
+join results rs on c.constructorId = rs.constructorId 
+join races r on rs.raceId = r.raceId 
+where r.`year` between 1991 and 1995
+and rs.`position` is not null)
+select c1.name, c2.name, count(distinct c1.driverid)
+from costruttori c1
+join costruttori c2 on c1.constructorid < c2.constructorid 
+and c1.driverid = c2.driverid 
+group by c1.constructorId, c1.name, c2.constructorid, c2.name 
